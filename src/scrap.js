@@ -2,63 +2,84 @@ const pup = require("puppeteer");
 
 const url = "https://www.mercadolivre.com.br";
 
-const searchFor = "Teclado Mecânico Gamer Redragon";
+const searchFor = "Teclado Mecânico Redragon";
 
-count = 1;
+let countPage = 1;
+
+const products = [];
 
 (async () => {
-    // Inicializar o navegador
-    const browser = await pup.launch({ 
-        // headless: false,
-        // executablePath: '/usr/bin/chromium-browser',
+    const browser = await pup.launch({
+
     });
-    // Cria uma nova página
+
     const page = await browser.newPage();
-    // Redireciona para a url
+
+    console.log(`-------------------- Iniciando scrap em ${url} --------------------`);
+
     await page.goto(url);
 
+    // Acessando a barra de pesquisa e realizando a busca pelo produto
     await page.waitForSelector("#cb1-edit");
-
-    // Input de pesquisa do produto
     await page.type("#cb1-edit", searchFor);
-
     await Promise.all([
         page.waitForNavigation(),
-        await page.click(".nav-search-btn")
+        page.click(".nav-search-btn")
     ]);
 
     const links = await page.$$eval(
-        ".ui-search-result__image > a", 
+        ".ui-search-result__image > a",
         el => el.map(
             link => link.href
         )
     );
 
+    // Caminhando pelas por todas as páginas do site do Mercado Livre
     for (const link of links) {
+        console.log();
+        console.log("Página", countPage);
+        console.log();
+
         await page.goto(link);
 
         await page.waitForSelector(".ui-pdp-title");
 
-        const title = await page.$eval(".ui-pdp-title", el => el.innerText);
-        const price = await page.$eval(".andes-money-amount__fraction", el => el.innerText);
+        // Faz scrap das propriedades do produto buscado (título, preço, vendedor e link do produto)
+        const title = await page.$eval(
+            ".ui-pdp-title",
+            el => el.innerText
+        );
+
+        const price = await page.$eval(
+            ".andes-money-amount__fraction",
+            el => el.innerText
+        );
+
         const seller = await page.evaluate(() => {
-            const el = document.querySelector(".ui-pdp-seller__link-trigger");
-            if (!el) return null;
-            return el.innerText;
+            const element = document.querySelector(".ui-pdp-seller__link-trigger");
+            if (!element) return null;
+            return element.innerText;
         });
 
-        const obj = {};
+        const item = {};
+        item.title = title;
+        item.price = price;
+        (seller ? item.seller = seller : "");
+        item.link = link;
 
-        obj.title = title;
-        obj.price = price;
-        obj.seller = seller;
+        products.push(item);
 
-        console.log(obj);
-        
-        count++;
+        console.log(products);
+        console.log();
+
+        countPage++;
     }
 
-    new Promise(r => setTimeout(r, 3000));
-    // Fecha o browser
+    await new Promise(
+        r => setTimeout(r, 3000)
+    );
+
     await browser.close();
+
+    console.log(`------------------------------- Scrap finalizado com sucesso -------------------------------`);
 })();
