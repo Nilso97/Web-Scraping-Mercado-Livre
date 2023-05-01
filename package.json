@@ -1,0 +1,16 @@
+{
+  "name": "web-scraping-mercado-livre",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "chromium": "^3.0.3",
+    "puppeteer": "^19.11.1"
+  }
+}
